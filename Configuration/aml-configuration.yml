@@ -1,0 +1,87 @@
+variables:
+
+  # ap_vm_image: ubuntu-20.04
+  # ado_service_connection_aml_ws: KGL-testusecaes-dev-sc
+  # aml_workspace: amlmlopspockgl02
+  # environment_conda_yaml: dev
+  # environment_name: dev
+  # resource_group: rg-kdevops-dev
+# Training pipeline settings
+  # Training dataset settings
+  training_dataset_name: uci-credit # change dataset name
+  training_dataset_description: uci_credit # change desc
+  training_dataset_local_path: mlops/09-01-2022_023415_UTC/ # don't change
+  training_dataset_path_on_datastore: mlops/09-01-2022_023415_UTC/credit.csv # don't change
+  training_dataset_type:  local # don't change
+  training_dataset_storage_url: 'https://samlopspockgl02.blob.core.windows.net/azureml-blobstore-5681d05d-12b4-4b28-88c0-f7713367da4e/mlops/09-01-2022_023557_UTC/' # update blobstore path with datapath
+  training_dataset_blob_storage: workspaceblobstore # don't change
+  # Training AzureML Environment name
+  training_env_name: dev
+
+  # Training AzureML Environment conda yaml
+  training_env_conda_yaml: Configuration/train.yml
+
+  # config_path: Configuartion/config.json
+
+  # Name for the training pipeline
+  training_pipeline_name: credit-training # change name with respect to use case
+
+  # Compute target for pipeline
+  training_target: cpu-cluster
+  training_target_sku: Standard_F8s_v2
+  # training_target_sku: STANDARD_D2_V2
+  training_target_min_nodes: 0
+  training_target_max_nodes: 20
+
+  # Training arguments specification; use azureml:dataset_name:version to reference an AML Dataset for --data_path (this is for previous version)
+  training_arguments: --data_path azureml:uci-credit:1 # change dataset name
+  #training_arguments: ''
+  # Training datasets specification
+  # Syntax: <name>:<version>:<mode>:<steps (names separated by +)>
+  training_datasets: uci-credit:1:download:prep # change dataset name
+  # Name under which the model will be registered
+  model_name: Test
+
+# Batch pipeline settings
+
+  # Batch scoring dataset settings
+  scoring_dataset_name: credit-batch-input
+  scoring_dataset_description: credit-batch-input
+  scoring_dataset_local_path: /mlops/09-01-2022_023557_UTC/
+  scoring_dataset_path_on_datastore: /mlops/09-01-2022_023557_UTC/credit_batch.csv
+  scoring_dataset_type: local
+  scoring_dataset_storage_url: 'https://samlopspockgl02.blob.core.windows.net/azureml-blobstore-5681d05d-12b4-4b28-88c0-f7713367da4e/mlops/09-01-2022_023415_UTC/'
+
+  # Batch AzureML Environment name
+  batch_env_name: credit-batch
+
+  # Batch AzureML Environment conda yaml
+  batch_env_conda_yaml: Configuration/batch.yml
+
+  # Name for the batch scoring pipeline
+  batch_pipeline_name: credit-batch-scoring
+
+  # Compute target for pipeline
+  batch_target: cpu-cluster
+  #not needed because batch uses the same target as training
+  # batch_target_sku: STANDARD_D2_V2
+  # batch_target_min_nodes: 0
+  # batch_target_max_nodes: 4
+
+  # Input batch dataset
+  batch_input_dataset_name: credit-batch-input
+
+  # Output dataset with results
+  batch_output_dataset_name: credit-batch-output
+  batch_output_path_on_datastore: credit-batch-scoring-results/{run-id}
+  batch_output_filename: results.csv
+
+  # Parallelization settings
+  batch_mini_batch_size: 8
+  batch_error_threshold: 1
+  batch_process_count_per_node: 1
+  batch_node_count: 1
+
+  # Monitoring settings
+  scoring_table_name: scoringdata
+  training_table_name: mlmonitoring

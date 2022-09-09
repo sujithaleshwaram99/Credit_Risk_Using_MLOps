@@ -1,0 +1,79 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+
+trigger:
+- none
+
+pool:
+  vmImage: $(ap_vm_image)
+resources:
+  repositories:
+    - repository: repo
+      type: git
+      name: KGL AI ML COE/MLOps_Sandbox
+      ref: test_pipeline
+
+variables:
+- template: Configuration/aml-configuration.yml@repo
+- template: Configuration/config-infra-dev.yml@repo
+
+stages:
+- stage: DeployTrainingPipeline
+  displayName: Deploy Training Pipeline
+  jobs:
+    - job: DeployTrainingPipeline
+      steps:
+      - checkout: repo
+      - template: Templates/mlops-templates/install-az-cli.yml@repo
+      - template: Templates/mlops-templates/install-aml-cli.yml@repo
+      - template: Templates/mlops-templates/connect-to-workspace.yml@repo
+      - template: Templates/mlops-templates/create-environment.yml@repo
+        parameters:
+          environment_name: $(training_env_name)
+          build_type: 'conda'
+          environment_file: $(training_env_conda_yaml)
+          enable_monitoring: $(enable_monitoring)
+      - template: Templates/mlops-templates/register-dataset.yml@repo
+        parameters:
+          data_type: training
+      - template: Templates/mlops-templates/get-compute.yml@repo
+        parameters:
+          compute_type: training
+      - template: Templates/mlops-templates/deploy-training-pipeline.yml@repo
+        parameters:
+          enable_monitoring: $(enable_monitoring)
+      - template: Templates/mlops-templates/add-pipeline-to-endpoint.yml@repo
+      - template: Templates/mlops-templates/run-pipeline.yml@repo
+
+- stage: DeployBatchScoringPipeline
+  displayName: Deploy Batch Scoring Pipeline
+  jobs:
+    - job: DeployBatchScoringPipeline
+      steps:
+      - checkout: repo
+      - template: Templates/mlops-templates/install-az-cli.yml@repo
+      - template: Templates/mlops-templates/install-aml-cli.yml@repo
+      - template: Templates/mlops-templates/connect-to-workspace.yml@repo
+      - template: Templates/mlops-templates/create-environment.yml@repo
+        parameters:
+          environment_name: $(batch_env_name)
+          build_type: 'conda'
+          environment_file: $(batch_env_conda_yaml)
+          enable_monitoring: $(enable_monitoring)
+      - template: Templates/mlops-templates/register-dataset.yml@repo
+        parameters:
+          data_type: scoring
+      - template: Templates/mlops-templates/deploy-batch-scoring-pipeline.yml@repo
+        parameters:
+          enable_monitoring: $(enable_monitoring)
+      - template: Templates/mlops-templates/add-pipeline-to-endpoint.yml@repo
+      - template: Templates/mlops-templates/run-pipeline.yml@repo
+
+- stage: DeployDriftJob
+  displayName: Deploy Drift Job
+  jobs:
+    - job: DeployDriftJob
+      steps:
+      - checkout: repo
+      - template: Templates/mlops-templates/deploy-drift-detection.yml@repo
